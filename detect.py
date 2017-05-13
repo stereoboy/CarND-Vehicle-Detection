@@ -135,7 +135,7 @@ def draw_bboxes(img, bbox_list):
     draw_img = img.copy()
 
     for bbox in bbox_list:
-        cv2.rectangle(draw_img, bbox[0], bbox[1], (0,0,255), 6)
+        cv2.rectangle(draw_img, tuple(bbox[0]), tuple(bbox[1]), (0,0,255), 6)
     return draw_img
 
 # label[0] is segmented and labeled images
@@ -169,10 +169,9 @@ def find_cars_multiscale(img, scale_list, svc, X_scaler, orient, pix_per_cell, c
     return bbox_list
 
 def detect_cars(img, scale_list, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
-    ystart = 400
-    ystop = 656
+    ystart = 380
+    ystop = 700
     scale = 1.5
-    spatial_size=(32, 32)
 
     bbox_list = find_cars_multiscale(img, scale_list, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
     out_img = draw_bboxes(img, bbox_list)
@@ -183,15 +182,15 @@ def detect_cars(img, scale_list, svc, X_scaler, orient, pix_per_cell, cell_per_b
     heat = add_heat(heat,bbox_list)
 
     # Apply threshold to help remove false positives
-    heat = apply_threshold(heat,1)
+    heat = apply_threshold(heat, 1)
 
     # Visualize the heatmap when displaying
     heatmap = np.clip(heat, 0, 255)
 
+    cv2.imshow('heatmap', heatmap.astype(np.uint8)*16)
     # Find final boxes from heatmap using label function
     labels = label(heatmap)
 
-    draw_img = draw_labeled_bboxes(np.copy(img), labels)
 
     bbox_list = []
     # Iterate through all detected cars
@@ -203,8 +202,9 @@ def detect_cars(img, scale_list, svc, X_scaler, orient, pix_per_cell, cell_per_b
         nonzerox = np.array(nonzero[1])
         # Define a bounding box based on min/max x and y
         bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
+        bbox_list.append(bbox)
 
-    return draw_img, bbox_list
+    return bbox_list
 
 def main():
     dist_pickle = pickle.load( open("svc_pickle.p", "rb" ) )
@@ -236,7 +236,6 @@ def main():
         plt.savefig(os.path.join('./output_images/', 'sliding_window_' + str(scale) + '.png'))
         plt.show()
 
-
     print('1. basic car detection')
     for i, filename in enumerate(filelist):
         img = mpimg.imread(filename)
@@ -263,12 +262,12 @@ def main():
         heat = add_heat(heat,bbox_list)
 
         # Apply threshold to help remove false positives
-        heat = apply_threshold(heat,1)
+        heat = apply_threshold(heat, 1)
 
         # Visualize the heatmap when displaying
         heatmap = np.clip(heat, 0, 255)
 
-        figs, subplots = plt.subplots(1, 2, figsize=(20, 10))
+        figs, subplots = plt.subplots(1, 2, figsize=(15, 5))
         subplots[0].imshow(out_img)
         subplots[0].set_title(filename)
 
@@ -298,7 +297,7 @@ def main():
 
         labels = label(heatmap)
 
-        figs, subplots = plt.subplots(1, 2, figsize=(20, 10))
+        figs, subplots = plt.subplots(1, 2, figsize=(15, 5))
         subplots[0].imshow(out_img)
         subplots[0].set_title(filename)
 
@@ -308,7 +307,7 @@ def main():
         figs.savefig(os.path.join('./output_images/', 'label_' + os.path.basename(filename)))
         plt.show()
 
-    print('4. refine bounding box using heatmap')
+    print('4. refine bounding boxes using heatmap')
     for i, filename in enumerate(filelist):
         img = mpimg.imread(filename)
 
@@ -331,7 +330,7 @@ def main():
 
         draw_img = draw_labeled_bboxes(np.copy(img), labels)
 
-        figs, subplots = plt.subplots(1, 2, figsize=(20, 10))
+        figs, subplots = plt.subplots(1, 2, figsize=(15, 5))
         subplots[0].imshow(out_img)
         subplots[0].set_title(filename)
 

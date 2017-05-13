@@ -5,15 +5,17 @@ import matplotlib.pyplot as plt
 import pickle
 import sys
 import os
+from detect import *
 
+print('0. setup for camera calibration')
 with open('camera_cal.npz','rb') as f:
     camera_cal = np.load(f)
     mtx = camera_cal['mtx']
     dist = camera_cal['dist']
 
-W, H = 2500, 2280
-trim_w, trim_h = 1500, 800
-offset = 400
+W, H = 1280, 720
+trim_w, trim_h = 1280, 720
+offset = 0
 src = np.array([[594, 450], [684, 450], [1056, 690], [250,690]], np.float32)
 dst = np.array([[offset + 250, 0], [offset + 1056, 0], [offset + 1056, H], [offset + 250, H]], np.float32)
 Center = offset + (250 + 1056)//2
@@ -455,7 +457,80 @@ def pipeline(img):
 
     return result
 
+def cal_area(box):
+    w, h = np.array(box[1]) - np.array(box[0])
+    return w*h
+
+def cal_iou(box1, box2):
+    area1 = cal_area(box1)
+    area2 = cal_area(box2)
+
+    upleft = np.maximum(box1[0], box2[0])
+    downright = np.minimum(box1[1], box2[1])
+    
+    intersect = np.maximum((.0, .0), downright - upleft)
+
+    intersect_area = intersect[0]*intersect[1]
+    union_area = area1 + area2 - intersect_area
+    
+    return float(intersect_area)/union_area
+
+def lowpass_filter(bbox_list, tracked_bbox_list):
+
+    new_list = []
+    for bbox in bbox_list:
+        print("#################################")
+        bbox_trajectory = []
+        cur_bbox = bbox
+        for idx, prev_bbox_list in enumerate(tracked_bbox_list[::-1]):
+            print("--------------------------")
+            # track bbox backward
+            max_iou = 0.0
+            tracked_bbox = None
+            for prev_bbox in prev_bbox_list:
+               iou = cal_iou(cur_bbox, prev_bbox)
+               if iou > 0.3 and iou > max_iou:
+                   max_iou = iou
+                   tracked_bbox = prev_bbox
+               print(bbox, cur_bbox, prev_bbox, iou, max_iou, tracked_bbox)
+            if tracked_bbox is not None:
+                bbox_trajectory.append(tracked_bbox)
+            else:
+                continue
+            cur_bbox = tracked_bbox
+        print(bbox_trajectory)
+
+        # allow detection failures on 1~2 frame
+        # even though detector cannot track a vehicle on 1~2 frames, guess the location nearby frames
+        if len(tracked_bbox_list) - len(bbox_trajectory) < 3:
+            mean_bbox = np.mean(np.array(bbox_trajectory), axis=0).astype(np.int32)
+            new_list.append(mean_bbox)
+            if len(tracked_bbox_list) - len(bbox_trajectory) > 0:
+                print('skip!!!!!!!!!!!!!!')
+    
+    return new_list
+
 def main():
+
+    print('1. setup for car detection')
+
+    dist_pickle = pickle.load( open("svc_pickle.p", "rb" ) )
+    svc = dist_pickle["svc"]
+    X_scaler = dist_pickle["scaler"]
+    orient = dist_pickle["orient"]
+    pix_per_cell = dist_pickle["pix_per_cell"]
+    cell_per_block = dist_pickle["cell_per_block"]
+#spatial_size = dist_pickle["spatial_size"]
+    hist_bins = dist_pickle["hist_bins"]
+
+    print(dist_pickle)
+    ystart = 400
+    ystop = 656
+    scale = 1.5
+    #scale_list = [1.33, 1.66, 2.00, 2.33]
+    scale_list = [1.2, 1.6, 2.0]
+    spatial_size=(32, 32)
+
     cap = cv2.VideoCapture(sys.argv[1])
     #
     # sudo apt-get install ffmpeg x264 libx264-dev
@@ -464,15 +539,32 @@ def main():
     #out = cv2.VideoWriter('result_' + sys.argv[1],fourcc, 25.0, (1280,720))
     out = cv2.VideoWriter('result_' + os.path.splitext(os.path.basename(sys.argv[1]))[0] + ".mp4", fourcc, 25.0, (1280,720))
 
+    count = 0
+    tracked_bbox_list = []
     while(cap.isOpened()):
+        
         ret, frame = cap.read()
 
-        #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
         if ret:
-            new = pipeline(frame)
-            out.write(new)
-            cv2.imshow('frame', cv2.resize(new, (new.shape[1]//2, new.shape[0]//2)))
+            count += 1
+            if count > 1100:
+                print(count)
+                new = pipeline(frame)
+                bgr = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                bbox_list = detect_cars(bgr, scale_list, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+
+                print(tracked_bbox_list)
+                if len(tracked_bbox_list) > 5:
+                    filterd_bbox_list = lowpass_filter(bbox_list, tracked_bbox_list)
+                    tracked_bbox_list.pop(0)
+                    print('input:',bbox_list)
+                    print('filtered:',filterd_bbox_list)
+
+                    new = draw_bboxes(new, filterd_bbox_list)
+                tracked_bbox_list.append(bbox_list)
+
+                out.write(new)
+                cv2.imshow('frame', cv2.resize(new, (new.shape[1]//2, new.shape[0]//2)))
         else:
             break
 
