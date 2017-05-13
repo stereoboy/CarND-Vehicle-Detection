@@ -42,6 +42,18 @@ The goals / steps of this project are the following:
 [final1]: ./output_images/final_test3.jpg
 [final2]: ./output_images/final_test4.jpg
 
+[video_heatmap0]: ./output_images/heatmap_video_frame0.png
+[video_heatmap1]: ./output_images/heatmap_video_frame1.png
+[video_heatmap2]: ./output_images/heatmap_video_frame2.png
+
+[video_label0]: ./output_images/label_video_frame0.png
+[video_label1]: ./output_images/label_video_frame1.png
+[video_label2]: ./output_images/label_video_frame2.png
+
+[video_final0]: ./output_images/final_video_frame0.png
+[video_final1]: ./output_images/final_video_frame1.png
+[video_final2]: ./output_images/final_video_frame2.png
+
 [image3]: ./examples/sliding_windows.jpg
 [image4]: ./examples/sliding_window.jpg
 [image5]: ./examples/bboxes_and_heat.png
@@ -107,7 +119,7 @@ I got accuracy of  0.9888 on testset, which is 20% of all dataset.
 
 I decided to use Hog Sub-sampling Window Search proposed in the lecture.
 I used multiple scales: 1.33, 1.66, 2.0, 2.33 for detecting multi-size cars
-All implementations are in the file `detection.py`
+All implementations are in the file `detect.py`
 
 ![alt text][sliding_window0]
 ![alt text][sliding_window1]
@@ -148,21 +160,29 @@ Here's a [link to my video result](./project_video.mp4)
 
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
+I implemented vehicle-detection code for video frames in the file `video.py`.
+
+And I wrote another file `video_frame_analysis.py` for visualization and documentation. I captured 3 frames from project_video.mp4 by using Open CV video-related function and applied the detection pipeline on these frames. At last saved result images for `writeup.md`.
+
+I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.
 
 Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
 
-### Here are six frames and their corresponding heatmaps:
+### Here are 3 frames and their corresponding heatmaps:
 
-![alt text][image5]
+![alt text][video_heatmap0]
+![alt text][video_heatmap1]
+![alt text][video_heatmap2]
 
-### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
-![alt text][image6]
+### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all 3 frames:
+![alt text][video_label0]
+![alt text][video_label1]
+![alt text][video_label2]
 
 ### Here the resulting bounding boxes are drawn onto the last frame in the series:
-![alt text][image7]
-
-
+![alt text][video_final0]
+![alt text][video_final1]
+![alt text][video_final2]
 
 ---
 
@@ -170,5 +190,9 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 ####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+For robust detection I did the following things.
+* I applied lowpass filter (or smoother) detected bounding boxes. By calculating overlapped IOU(intersection over union) I added bounding box tracking mechanism. By using this lowpass filter, I got fine result.
+* I finetuned parameters: scale factor for sliding-window
 
+Future work
+* For more robust detection, more fine-grain bounding box tracking system is needed. Applying tracking filters such like Kalman filter can make more successful result.
