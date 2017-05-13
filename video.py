@@ -12,12 +12,22 @@ with open('camera_cal.npz','rb') as f:
     camera_cal = np.load(f)
     mtx = camera_cal['mtx']
     dist = camera_cal['dist']
-
 W, H = 1280, 720
+img_size = (W, H)
 trim_w, trim_h = 1280, 720
 offset = 0
-src = np.array([[594, 450], [684, 450], [1056, 690], [250,690]], np.float32)
-dst = np.array([[offset + 250, 0], [offset + 1056, 0], [offset + 1056, H], [offset + 250, H]], np.float32)
+#src = np.array([[594, 450], [684, 450], [1056, 690], [250,690]], np.float32)
+#dst = np.array([[offset + 250, 0], [offset + 1056, 0], [offset + 1056, H], [offset + 250, H]], np.float32)
+src = np.float32(
+    [[(img_size[0] / 2) - 60, img_size[1] / 2 + 100],
+    [((img_size[0] / 6) - 10), img_size[1]],
+    [(img_size[0] * 5 / 6) + 10, img_size[1]],
+    [(img_size[0] / 2 + 60), img_size[1] / 2 + 100]])
+dst = np.float32(
+    [[(img_size[0] / 4), 0],
+    [(img_size[0] / 4), img_size[1]],
+    [(img_size[0] * 3 / 4), img_size[1]],
+    [(img_size[0] * 3 / 4), 0]])
 Center = offset + (250 + 1056)//2
 
 M = cv2.getPerspectiveTransform(src, dst)
@@ -431,23 +441,28 @@ class Lane():
 
 lane = Lane()
 
-#def pipeline(img):
-#    undistorted = cv2.undistort(img, mtx, dist, None, mtx)
-#    #combined = combined_threshold(undistorted)
-#    combined = combined_threshold_v2(undistorted)
-#    binary_warped = unwarp_trim(combined)
-#    cv2.imshow('warped', cv2.resize(binary_warped*255, (binary_warped.shape[1]//2, binary_warped.shape[0]//2)))
-#    line_img = lane.find_lane_lines(binary_warped)
-#    result = inv_warp(img, line_img)
-#
-#    return result
-
 def pipeline(img):
+    undistorted = cv2.undistort(img, mtx, dist, None, mtx)
+    combined = combined_threshold(undistorted)
+    binary_warped = unwarp_trim(combined)
+    cv2.imshow('warped', cv2.resize(binary_warped*255, (binary_warped.shape[1]//2, binary_warped.shape[0]//2)))
+    line_img, curvature, center = lane.find_lane_lines(binary_warped)
+    result = inv_warp(img, line_img)
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    text0 = 'curvature:%.4fm'%(curvature)
+    text1 = 'center:%.4fm'%(center)
+    cv2.putText(result, text0, (10,100), font, 1.5, (255,255,255), 3)
+    cv2.putText(result, text1, (10,200), font, 1.5, (255,255,255), 3)
+
+    return result
+
+def pipeline_v2(img):
     undistorted = cv2.undistort(img, mtx, dist, None, mtx)
     combined = combined_threshold_v2(undistorted)
     binary_warped = unwarp_trim(combined)
     line_img, curvature, center = lane.find_lane_lines(binary_warped)
-    result = inv_warp(img, line_img)
+    result = inv_warp(undistorted, line_img)
 
     font = cv2.FONT_HERSHEY_SIMPLEX
     text0 = 'curvature:%.4fm'%(curvature)
@@ -528,7 +543,7 @@ def main():
     ystop = 656
     scale = 1.5
     #scale_list = [1.33, 1.66, 2.00, 2.33]
-    scale_list = [1.2, 1.6, 2.0]
+    scale_list = [1.1, 1.4, 1.6, 2.0]
     spatial_size=(32, 32)
 
     cap = cv2.VideoCapture(sys.argv[1])
@@ -547,11 +562,12 @@ def main():
 
         if ret:
             count += 1
-            if count > 1100:
-                print(count)
-                new = pipeline(frame)
-                bgr = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                bbox_list = detect_cars(bgr, scale_list, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            new = rgb
+            new = pipeline(rgb)
+            print(count)
+            if count > 140:
+                bbox_list = detect_cars(rgb, scale_list, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
                 print(tracked_bbox_list)
                 if len(tracked_bbox_list) > 5:
@@ -563,8 +579,9 @@ def main():
                     new = draw_bboxes(new, filterd_bbox_list)
                 tracked_bbox_list.append(bbox_list)
 
-                out.write(new)
-                cv2.imshow('frame', cv2.resize(new, (new.shape[1]//2, new.shape[0]//2)))
+            new = cv2.cvtColor(new, cv2.COLOR_RGB2BGR)
+            out.write(new)
+            cv2.imshow('frame', cv2.resize(new, (new.shape[1]//2, new.shape[0]//2)))
         else:
             break
 
