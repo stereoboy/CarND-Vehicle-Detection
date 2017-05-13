@@ -169,9 +169,6 @@ def find_cars_multiscale(img, scale_list, svc, X_scaler, orient, pix_per_cell, c
     return bbox_list
 
 def detect_cars(img, scale_list, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
-    ystart = 380
-    ystop = 700
-    scale = 1.5
 
     bbox_list = find_cars_multiscale(img, scale_list, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
     out_img = draw_bboxes(img, bbox_list)
@@ -213,7 +210,7 @@ def main():
     orient = dist_pickle["orient"]
     pix_per_cell = dist_pickle["pix_per_cell"]
     cell_per_block = dist_pickle["cell_per_block"]
-#spatial_size = dist_pickle["spatial_size"]
+    spatial_size = dist_pickle["spatial_size"]
     hist_bins = dist_pickle["hist_bins"]
 
     print(dist_pickle)
@@ -221,7 +218,6 @@ def main():
     ystop = 656
     scale = 1.5
     scale_list = [1.33, 1.66, 2.00, 2.33]
-    spatial_size=(32, 32)
 
     filelist = glob.glob(os.path.join('./test_images', '*.jpg'))
 

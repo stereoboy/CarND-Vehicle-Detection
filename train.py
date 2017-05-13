@@ -13,22 +13,6 @@ from skimage.feature import hog
 from sklearn.model_selection import train_test_split
 from feature import single_img_features
 
-# Define a function to return HOG features and visualization
-def get_hog_features(img, orient, pix_per_cell, cell_per_block, 
-                        vis=False, feature_vec=True):
-    # Call with two outputs if vis==True
-    if vis == True:
-        features, hog_image = hog(img, orientations=orient, pixels_per_cell=(pix_per_cell, pix_per_cell),
-                                  cells_per_block=(cell_per_block, cell_per_block), transform_sqrt=True, 
-                                  visualise=vis, feature_vector=feature_vec)
-        return features, hog_image
-    # Otherwise call with one output
-    else:      
-        features = hog(img, orientations=orient, pixels_per_cell=(pix_per_cell, pix_per_cell),
-                       cells_per_block=(cell_per_block, cell_per_block), transform_sqrt=True, 
-                       visualise=vis, feature_vector=feature_vec)
-        return features
-
 # Define a function to extract features from a list of images
 # Have this function call bin_spatial() and color_hist()
 def extract_features(imgs, color_space='RGB', orient=9, spatial_size=(32, 32), hist_bins=32,
@@ -85,12 +69,13 @@ def main():
     pix_per_cell = 8
     cell_per_block = 2
     hog_channel = "ALL" # Can be 0, 1, 2, or "ALL"
+    spatial_size=(32, 32)
 
     t=time.time()
-    car_features = extract_features(cars, color_space=colorspace, orient=orient, 
+    car_features = extract_features(cars, color_space=colorspace, orient=orient, spatial_size=spatial_size,
                             pix_per_cell=pix_per_cell, cell_per_block=cell_per_block, 
                             hog_channel=hog_channel)
-    notcar_features = extract_features(notcars, color_space=colorspace, orient=orient, 
+    notcar_features = extract_features(notcars, color_space=colorspace, orient=orient, spatial_size=spatial_size,
                             pix_per_cell=pix_per_cell, cell_per_block=cell_per_block, 
                             hog_channel=hog_channel)
     t2 = time.time()
@@ -137,6 +122,7 @@ def main():
     dist_pickle["orient"] = orient
     dist_pickle["pix_per_cell"] = pix_per_cell
     dist_pickle["cell_per_block"] = cell_per_block
+    dist_pickle["spatial_size"] = spatial_size
     dist_pickle["hist_bins"] = hist_bins
     with open("svc_pickle.p", "wb") as f:
         pickle.dump(dist_pickle, f)
