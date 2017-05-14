@@ -25,18 +25,19 @@ def main():
     orient = dist_pickle["orient"]
     pix_per_cell = dist_pickle["pix_per_cell"]
     cell_per_block = dist_pickle["cell_per_block"]
-#spatial_size = dist_pickle["spatial_size"]
+    spatial_size = dist_pickle["spatial_size"]
     hist_bins = dist_pickle["hist_bins"]
 
     print(dist_pickle)
     ystart = 400
     ystop = 656
     scale = 1.5
-    scale_list = [1.33, 1.66, 2.00, 2.33]
-    spatial_size=(32, 32)
+    scale_list = [1.1, 1.3, 1.5, 1.7, 2.0, 2.4]
+    start = 1100
 
     print('0. capture video frames')
     cap = cv2.VideoCapture(sys.argv[1])
+    cap.set(cv2.CAP_PROP_POS_FRAMES, start)
     
     count = 0
 
@@ -46,14 +47,10 @@ def main():
         ret, frame = cap.read()
 
         if ret:
+            video_frame_list.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            if count > 3:
+                break
             count += 1
-            if count > 1100 and count < 1104:
-                video_frame_list.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-        else:
-            break
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
 
     cap.release()
     cv2.destroyAllWindows()

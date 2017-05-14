@@ -504,7 +504,7 @@ def lowpass_filter(bbox_list, tracked_bbox_list):
             tracked_bbox = None
             for prev_bbox in prev_bbox_list:
                iou = cal_iou(cur_bbox, prev_bbox)
-               if iou > 0.3 and iou > max_iou:
+               if iou > 0.5 and iou > max_iou:
                    max_iou = iou
                    tracked_bbox = prev_bbox
                print(bbox, cur_bbox, prev_bbox, iou, max_iou, tracked_bbox)
@@ -517,7 +517,7 @@ def lowpass_filter(bbox_list, tracked_bbox_list):
 
         # allow detection failures on 1~2 frame
         # even though detector cannot track a vehicle on 1~2 frames, guess the location nearby frames
-        if len(tracked_bbox_list) - len(bbox_trajectory) < 3:
+        if len(bbox_trajectory) > 4 and len(tracked_bbox_list) - len(bbox_trajectory) < 6:
             mean_bbox = np.mean(np.array(bbox_trajectory), axis=0).astype(np.int32)
             new_list.append(mean_bbox)
             if len(tracked_bbox_list) - len(bbox_trajectory) > 0:
@@ -535,18 +535,20 @@ def main():
     orient = dist_pickle["orient"]
     pix_per_cell = dist_pickle["pix_per_cell"]
     cell_per_block = dist_pickle["cell_per_block"]
-#spatial_size = dist_pickle["spatial_size"]
+    spatial_size = dist_pickle["spatial_size"]
     hist_bins = dist_pickle["hist_bins"]
 
     print(dist_pickle)
-    ystart = 400
-    ystop = 656
-    scale = 1.5
     #scale_list = [1.33, 1.66, 2.00, 2.33]
-    scale_list = [1.1, 1.4, 1.6, 2.0]
-    spatial_size=(32, 32)
+    scale_list = [1.0, 1.33, 1.66]
+    scale_list = [1.1, 1.3, 1.5, 1.7, 2.0, 2.4]
+    #scale_list = [0.95, 1.15, 1.3, 1.6, 2.0]
+    threshold = 1
+    #start = 130
+    start = 0
 
     cap = cv2.VideoCapture(sys.argv[1])
+    cap.set(cv2.CAP_PROP_POS_FRAMES, start)
     #
     # sudo apt-get install ffmpeg x264 libx264-dev
     #
@@ -554,7 +556,7 @@ def main():
     #out = cv2.VideoWriter('result_' + sys.argv[1],fourcc, 25.0, (1280,720))
     out = cv2.VideoWriter('result_' + os.path.splitext(os.path.basename(sys.argv[1]))[0] + ".mp4", fourcc, 25.0, (1280,720))
 
-    count = 0
+    count = start 
     tracked_bbox_list = []
     while(cap.isOpened()):
         
@@ -566,17 +568,18 @@ def main():
             new = rgb
             new = pipeline(rgb)
             print(count)
-            if count > 140:
-                bbox_list = detect_cars(rgb, scale_list, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+            if count > 130:
+                bbox_list = detect_cars(rgb, scale_list, threshold, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
                 print(tracked_bbox_list)
                 if len(tracked_bbox_list) > 5:
                     filterd_bbox_list = lowpass_filter(bbox_list, tracked_bbox_list)
-                    tracked_bbox_list.pop(0)
                     print('input:',bbox_list)
                     print('filtered:',filterd_bbox_list)
-
                     new = draw_bboxes(new, filterd_bbox_list)
+                    
+                    if len(tracked_bbox_list) > 7:
+                        tracked_bbox_list.pop(0)
                 tracked_bbox_list.append(bbox_list)
 
             new = cv2.cvtColor(new, cv2.COLOR_RGB2BGR)

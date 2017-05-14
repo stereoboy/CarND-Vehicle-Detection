@@ -13,6 +13,16 @@ from skimage.feature import hog
 from sklearn.model_selection import train_test_split
 from feature import single_img_features
 
+def augment_brightness(image):
+    image1 = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
+    image1 = np.array(image1, dtype = np.float64)
+    random_bright = .5+np.random.uniform()
+    image1[:,:,2] = image1[:,:,2]*random_bright
+    image1[:,:,2][image1[:,:,2]>255]  = 255
+    image1 = np.array(image1, dtype = np.uint8)
+    image1 = cv2.cvtColor(image1,cv2.COLOR_HSV2RGB)
+    return image1
+
 # Define a function to extract features from a list of images
 # Have this function call bin_spatial() and color_hist()
 def extract_features(imgs, color_space='RGB', orient=9, spatial_size=(32, 32), hist_bins=32,
@@ -32,6 +42,16 @@ def extract_features(imgs, color_space='RGB', orient=9, spatial_size=(32, 32), h
                             hog_channel=hog_channel, spatial_feat=spatial_feat, 
                             hist_feat=hist_feat, hog_feat=hog_feat)
         features.append(feature)
+
+        #data augmentation
+#        flip = cv2.flip(image, 1)
+#        feature = single_img_features(flip, color_space=color_space, 
+#                            spatial_size=spatial_size, hist_bins=hist_bins, 
+#                            orient=orient, pix_per_cell=pix_per_cell, 
+#                            cell_per_block=cell_per_block, 
+#                            hog_channel=hog_channel, spatial_feat=spatial_feat, 
+#                            hist_feat=hist_feat, hog_feat=hog_feat)
+#        features.append(feature)
     # Return list of feature vectors
     return features
 
@@ -53,8 +73,8 @@ def build_filenames(dirs):
 
 def main():
     # Divide up into cars and notcars
-    notcar_dirs = ['non-vehicles', 'non-vehicles_smallset']
-    car_dirs = ['vehicles', 'vehicles_smallset']
+    notcar_dirs = ['non-vehicles', 'non-vehicles_smallset', 'notcar']
+    car_dirs = ['vehicles', 'vehicles_smallset', 'car']
 
     
     cars = build_filenames(car_dirs)
@@ -93,7 +113,7 @@ def main():
     # Split up data into randomized training and test sets
     rand_state = np.random.randint(0, 100)
     X_train, X_test, y_train, y_test = train_test_split(
-        scaled_X, y, test_size=0.2, random_state=rand_state)
+        scaled_X, y, test_size=0.1, random_state=rand_state)
 
     print('Using:',orient,'orientations',pix_per_cell,
         'pixels per cell and', cell_per_block,'cells per block')

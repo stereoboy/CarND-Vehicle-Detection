@@ -8,6 +8,7 @@ import glob
 from lesson_functions import *
 from feature import *
 from scipy.ndimage.measurements import label
+from datetime import datetime
 
 # Define a single function that can extract features using hog sub-sampling and make predictions
 def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
@@ -64,11 +65,13 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
             hist_features = color_hist(subimg, nbins=hist_bins)
 
             # Scale features and make a prediction
+            #test_features = X_scaler.transform(np.hstack((spatial_features, hog_features)).reshape(1, -1))
             test_features = X_scaler.transform(np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))
             #test_features = X_scaler.transform(np.hstack((shape_feat, hist_feat)).reshape(1, -1))    
             test_prediction = svc.predict(test_features)
 
             if test_prediction == 1:
+                #mpimg.imsave("./data/car/" + str(datetime.now()) + '.png', cv2.cvtColor(subimg, cv2.COLOR_YCrCb2RGB))
                 xbox_left = np.int(xleft*scale)
                 ytop_draw = np.int(ytop*scale)
                 win_draw = np.int(window*scale)
@@ -157,18 +160,17 @@ def draw_labeled_bboxes(img, labels):
 def find_cars_multiscale(img, scale_list, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
     ystart = 400
     ystop = 656
-    scale = 1.5
-    spatial_size=(32, 32)
-    bbox_list = []
 
+    bbox_list = []
     for scale in scale_list:
         _, sub = find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
         bbox_list.extend(sub)
 
+    #cv2.line(img, (0, ystart), (img.shape[1], ystart), (255, 0, 0))
     return bbox_list
 
-def detect_cars(img, scale_list, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
+def detect_cars(img, scale_list, threshold, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
 
     bbox_list = find_cars_multiscale(img, scale_list, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
     out_img = draw_bboxes(img, bbox_list)
@@ -179,15 +181,16 @@ def detect_cars(img, scale_list, svc, X_scaler, orient, pix_per_cell, cell_per_b
     heat = add_heat(heat,bbox_list)
 
     # Apply threshold to help remove false positives
-    heat = apply_threshold(heat, 1)
+    heat = apply_threshold(heat, threshold)
 
     # Visualize the heatmap when displaying
     heatmap = np.clip(heat, 0, 255)
 
-    cv2.imshow('heatmap', heatmap.astype(np.uint8)*16)
+    cv2.imshow('heatmap', cv2.resize(heatmap.astype(np.uint8)*20, (heatmap.shape[1]//2, heatmap.shape[0]//2)))
     # Find final boxes from heatmap using label function
     labels = label(heatmap)
 
+    cv2.imshow('labels', cv2.resize(labels[0].astype(np.uint8)*20, (heatmap.shape[1]//2, heatmap.shape[0]//2)))
 
     bbox_list = []
     # Iterate through all detected cars
@@ -216,8 +219,8 @@ def main():
     print(dist_pickle)
     ystart = 400
     ystop = 656
-    scale = 1.5
-    scale_list = [1.33, 1.66, 2.00, 2.33]
+    thres = 1
+    scale_list = [1.1, 1.3, 1.5, 1.7, 2.0, 2.4]
 
     filelist = glob.glob(os.path.join('./test_images', '*.jpg'))
 
@@ -258,7 +261,7 @@ def main():
         heat = add_heat(heat,bbox_list)
 
         # Apply threshold to help remove false positives
-        heat = apply_threshold(heat, 1)
+        heat = apply_threshold(heat, thres)
 
         # Visualize the heatmap when displaying
         heatmap = np.clip(heat, 0, 255)
@@ -286,7 +289,7 @@ def main():
         heat = add_heat(heat,bbox_list)
 
         # Apply threshold to help remove false positives
-        heat = apply_threshold(heat,1)
+        heat = apply_threshold(heat, thres)
 
         # Visualize the heatmap when displaying
         heatmap = np.clip(heat, 0, 255)
@@ -316,7 +319,7 @@ def main():
         heat = add_heat(heat,bbox_list)
 
         # Apply threshold to help remove false positives
-        heat = apply_threshold(heat,1)
+        heat = apply_threshold(heat, thres)
 
         # Visualize the heatmap when displaying
         heatmap = np.clip(heat, 0, 255)
