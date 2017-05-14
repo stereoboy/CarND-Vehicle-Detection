@@ -37,6 +37,8 @@ The goals / steps of this project are the following:
 [final1]: ./output_images/final_test3.jpg
 [final2]: ./output_images/final_test4.jpg
 
+[video_demo]: ./output_images/video_demo.png
+
 [video_heatmap0]: ./output_images/heatmap_video_frame0.png
 [video_heatmap1]: ./output_images/heatmap_video_frame1.png
 [video_heatmap2]: ./output_images/heatmap_video_frame2.png
@@ -152,6 +154,7 @@ Here are final results after confirming largest bounding boxes.
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
 Here's a [link to my video result](./result_project_video.mp4)
 
+![alt text][video_demo]
 
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
