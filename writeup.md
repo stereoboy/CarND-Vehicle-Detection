@@ -188,7 +188,11 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-For robust detection I did the following things.
+* More Data to enhance detection performance
+  * Dataset does not seem sufficient for the perfect classification.
+  * I extracted more images for negative data from `challenge_video.mp4` of the previous project. Since I had trouble in detecting white small car in the `preoject_video.mp4` I gathered more white car images.
+
+For robust detection and avoiding false positives I did the following things.
 * I applied lowpass filter (or smoother) detected bounding boxes. By calculating overlapped IOU(intersection over union) I added bounding box tracking mechanism. By using this lowpass filter, I got fine result.
 * I finetuned parameters: scale factor for sliding-window
 
