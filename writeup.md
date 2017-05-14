@@ -1,8 +1,3 @@
-##Writeup Template
-###You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
-
----
-
 **Vehicle Detection Project**
 
 The goals / steps of this project are the following:
@@ -21,10 +16,10 @@ The goals / steps of this project are the following:
 [bin_spatial]: ./output_images/bin_spatial.png
 [color_histogram]: ./output_images/color_histogram.png
 
-[sliding_window0]: ./output_images/sliding_window_1.33.png
-[sliding_window1]: ./output_images/sliding_window_1.66.png
-[sliding_window2]: ./output_images/sliding_window_2.0.png
-[sliding_window3]: ./output_images/sliding_window_2.33.png
+[sliding_window0]: ./output_images/sliding_window_1.1.png
+[sliding_window1]: ./output_images/sliding_window_1.3.png
+[sliding_window2]: ./output_images/sliding_window_1.5.png
+[sliding_window3]: ./output_images/sliding_window_1.7.png
 
 [base_detection0]: ./output_images/test1.jpg
 [base_detection1]: ./output_images/test3.jpg
@@ -62,7 +57,7 @@ The goals / steps of this project are the following:
 [video1]: ./project_video.mp4
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
-###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
+### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 ---
 ### Writeup / README
@@ -111,7 +106,7 @@ This is written down in lines #108 through #128 of the file `train.py`
 
 I use 9988 car files and 10093 notcar files.
 The elapsed time is: 114.58 secs for extracting feature vectors and 26.97 secs for training.
-I got accuracy of  0.9888 on testset, which is 20% of all dataset.
+I got accuracy of  0.995 on testset, which is 20% of all dataset.
 
 ### Sliding Window Search
 
@@ -128,7 +123,7 @@ All implementations are in the file `detect.py`
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
+I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
 
 ![alt text][base_detection0]
 ![alt text][base_detection1]
@@ -155,7 +150,7 @@ Here are final results after confirming largest bounding boxes.
 ### Video Implementation
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](./result_project_video.mp4)
 
 
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
