@@ -181,9 +181,9 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 ---
 
-###Discussion
+### Discussion
 
-####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 For robust detection I did the following things.
 * I applied lowpass filter (or smoother) detected bounding boxes. By calculating overlapped IOU(intersection over union) I added bounding box tracking mechanism. By using this lowpass filter, I got fine result.
