@@ -541,11 +541,10 @@ def main():
     print(dist_pickle)
     #scale_list = [1.33, 1.66, 2.00, 2.33]
     scale_list = [1.0, 1.33, 1.66]
+    #scale_list = [1.1, 1.25, 1.4, 1.6, 1.9, 2.2, 3.0, 4.2]
     scale_list = [1.1, 1.3, 1.5, 1.7, 2.0, 2.4]
-    #scale_list = [0.95, 1.15, 1.3, 1.6, 2.0]
     threshold = 1
-    #start = 130
-    start = 0
+    start = 0 
 
     cap = cv2.VideoCapture(sys.argv[1])
     cap.set(cv2.CAP_PROP_POS_FRAMES, start)
@@ -568,19 +567,18 @@ def main():
             new = rgb
             new = pipeline(rgb)
             print(count)
-            if count > 130:
-                bbox_list = detect_cars(rgb, scale_list, threshold, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+            bbox_list = detect_cars(rgb, scale_list, threshold, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
-                print(tracked_bbox_list)
-                if len(tracked_bbox_list) > 5:
-                    filterd_bbox_list = lowpass_filter(bbox_list, tracked_bbox_list)
-                    print('input:',bbox_list)
-                    print('filtered:',filterd_bbox_list)
-                    new = draw_bboxes(new, filterd_bbox_list)
-                    
-                    if len(tracked_bbox_list) > 7:
-                        tracked_bbox_list.pop(0)
-                tracked_bbox_list.append(bbox_list)
+            print(tracked_bbox_list)
+            if len(tracked_bbox_list) > 5:
+                filterd_bbox_list = lowpass_filter(bbox_list, tracked_bbox_list)
+                print('input:',bbox_list)
+                print('filtered:',filterd_bbox_list)
+                new = draw_bboxes(new, filterd_bbox_list)
+
+                if len(tracked_bbox_list) > 7:
+                    tracked_bbox_list.pop(0)
+            tracked_bbox_list.append(bbox_list)
 
             new = cv2.cvtColor(new, cv2.COLOR_RGB2BGR)
             out.write(new)
